@@ -1,4 +1,4 @@
-# dedicating-server-maker
+# dedicating-server-match-maker
 Try to make match maker and game-server orchestrator by using Colyseus
 
 ## How it work?
