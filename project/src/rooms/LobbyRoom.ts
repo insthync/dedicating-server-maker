@@ -3,6 +3,7 @@ import { LobbyPlayer } from "./schema/LobbyPlayer";
 import { LobbyRoomState } from "./schema/LobbyRoomState";
 import { EGameServerState } from "./enums/EGameServerState";
 import { ELobbyRoomState } from "./enums/ELobbyRoomState";
+import * as lobbyRoomList from "./LobbyRoomList";
 import * as child from "child_process";
 
 export class LobbyRoom extends Room<LobbyRoomState> {
@@ -33,6 +34,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     // Setup game messages
     // TODO: Add room management messages
     this.onMessage("startGame", this.onStartGame);
+    lobbyRoomList.add(this);
     console.log("room " + options.title + " created, has password? " + hasPassword);
     this.setSimulationInterval((deltaTime) => this.update(deltaTime));
   }
@@ -56,6 +58,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
 
   onDispose() {
     console.log("room " + this.roomId + " disposing...");
+    lobbyRoomList.remove(this);
   }
 
   onPlayerValidated(client: Client, options: any) {
@@ -97,6 +100,11 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     this.currentGameServerState = EGameServerState.Starting;
   }
 
+  onGameServerReady(options: any) {
+    this.broadcast("game-server-ready", options);
+    this.currentGameServerState = EGameServerState.Running;
+  }
+
   update(deltaTime: number) {
     switch (this.currentLobbyRoomState) {
       case ELobbyRoomState.Running:
@@ -104,6 +112,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         if (!this.managerSessionId || !this.state.players.has(this.managerSessionId)) {
           this.currentLobbyRoomState = ELobbyRoomState.Stopping;
           this.roomDisposeCountDown = parseInt(process.env.NO_MANAGER_DISPOSE_DELAY);
+          return;
         }
         break;
       case ELobbyRoomState.Stopping:
@@ -121,6 +130,16 @@ export class LobbyRoom extends Room<LobbyRoomState> {
       case ELobbyRoomState.Stopped:
         break;
     }
+  }
+
+  getInfo() {
+    return {
+      roomId: this.roomId,
+      roomName: this.roomName,
+      maxClients: this.maxClients,
+      maxTeams: this.maxTeams,
+      annotations: this.annotations,
+    };
   }
 
   playerIsManager(player: LobbyPlayer) {
