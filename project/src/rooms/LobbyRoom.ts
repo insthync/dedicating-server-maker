@@ -9,7 +9,6 @@ import * as child from "child_process";
 export class LobbyRoom extends Room<LobbyRoomState> {
   maxTeams: number = 1;
   password: string = "";
-  managerSessionId: string = undefined;
   annotations: { [key: string]: string } = {};
   currentGameServerState: EGameServerState = EGameServerState.None;
   currentLobbyRoomState: ELobbyRoomState = ELobbyRoomState.Running;
@@ -21,7 +20,6 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     this.maxClients = options.maxClients;
     this.maxTeams = options.maxTeams;
     this.password = options.password;
-    this.managerSessionId = undefined;
     this.annotations = options.annotations;
     // Create and set room state
     this.setState(new LobbyRoomState());
@@ -49,9 +47,9 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     this.broadcast("playerLeave", client.sessionId);
     // Change room manager Id
     if (this.clients.length > 0) {
-      this.managerSessionId = this.clients[0].sessionId;
+      this.state.managerSessionId = this.clients[0].sessionId;
     } else {
-      this.managerSessionId = undefined;
+      this.state.managerSessionId = "";
     }
     console.log(client.sessionId + " left!");
   }
@@ -72,8 +70,8 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     });
     this.state.players.set(client.sessionId, newPlayer);
     // Set manager session Id
-    if (!this.managerSessionId) {
-      this.managerSessionId = client.sessionId;
+    if (!this.hasManager()) {
+      this.state.managerSessionId = client.sessionId;
     }
     console.log(client.sessionId + " joined!");
   }
@@ -111,7 +109,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     switch (this.currentLobbyRoomState) {
       case ELobbyRoomState.Running:
         // No manager, disposing the room within `NO_MANAGER_DISPOSE_DELAY` milliseconds
-        if (!this.managerSessionId || !this.state.players.has(this.managerSessionId)) {
+        if (!this.hasManager() || !this.state.players.has(this.state.managerSessionId)) {
           this.currentLobbyRoomState = ELobbyRoomState.Stopping;
           this.roomDisposeCountDown = parseInt(process.env.NO_MANAGER_DISPOSE_DELAY);
           return;
@@ -119,7 +117,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         break;
       case ELobbyRoomState.Stopping:
         // It will dispose this room when it still has no manager and dispose count down reached `0`
-        if (this.managerSessionId && this.state.players.has(this.managerSessionId)) {
+        if (this.hasManager() && this.state.players.has(this.state.managerSessionId)) {
           this.currentLobbyRoomState = ELobbyRoomState.Running;
         } else {
           this.roomDisposeCountDown -= deltaTime;
@@ -145,6 +143,10 @@ export class LobbyRoom extends Room<LobbyRoomState> {
   }
 
   playerIsManager(player: LobbyPlayer) {
-    return this.managerSessionId === player.sessionId;
+    return this.hasManager() && this.state.managerSessionId === player.sessionId;
+  }
+
+  hasManager() {
+    return this.state.managerSessionId && this.state.managerSessionId.length > 0;
   }
 }
