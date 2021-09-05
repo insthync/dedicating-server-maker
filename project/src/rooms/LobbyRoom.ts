@@ -101,7 +101,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
   }
 
   onGameServerReady(options: any) {
-    this.broadcast("game-server-ready", options);
+    this.broadcast("gameServerReady", options);
     this.currentGameServerState = EGameServerState.Running;
   }
 
