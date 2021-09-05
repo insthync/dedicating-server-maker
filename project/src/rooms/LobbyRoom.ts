@@ -86,8 +86,10 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     // launch a game-server
     const filePath = String(process.env.EXE_PATH);
     const args: Array<string> = JSON.parse(process.env.EXE_LAUNCH_ARGS);
-    args.push("--roomId");
+    args.push(process.env.EXE_LAUNCH_ARG_ROOM_ID);
     args.push(this.roomId);
+    args.push(process.env.EXE_LAUNCH_ARG_PORT);
+    args.push(String(lobbyRoomList.getPort()));
     child.execFile(filePath, args, (error, stdout, stderr) => {
       if (error) {
         // TODO: May send error message to the client

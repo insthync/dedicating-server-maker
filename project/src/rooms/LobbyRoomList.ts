@@ -1,6 +1,7 @@
 import { LobbyRoom } from "./LobbyRoom";
 
 const rooms: { [key: string]: LobbyRoom } = {};
+let port: number = parseInt(process.env.EXE_LAUNCH_START_PORT);
 
 export function add(room: LobbyRoom): void {
     rooms[room.roomId] = room;
@@ -20,4 +21,8 @@ export function has(roomId: string): boolean {
 
 export function get(roomId: string): LobbyRoom {
     return rooms[roomId];
+}
+
+export function getPort(): number {
+    return port++;
 }
