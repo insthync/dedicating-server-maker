@@ -14,6 +14,8 @@ export class LobbyRoom extends Room<LobbyRoomState> {
   currentLobbyRoomState: ELobbyRoomState = ELobbyRoomState.Running;
   roomDisposeCountDown: number = 5000;
   playerLoginTokens: { [key: string]: string } = {};
+  gameServerProcess: child.ChildProcess = undefined;
+  unHealthyCountdown: number = 0;
 
   onCreate (options: any) {
     const hasPassword: boolean = options.password && options.password.length > 0;
@@ -90,7 +92,7 @@ export class LobbyRoom extends Room<LobbyRoomState> {
     args.push(this.roomId);
     args.push(process.env.EXE_LAUNCH_ARG_PORT);
     args.push(String(lobbyRoomList.getPort()));
-    child.execFile(filePath, args, (error, stdout, stderr) => {
+    this.gameServerProcess = child.execFile(filePath, args, (error, stdout, stderr) => {
       if (error) {
         // TODO: May send error message to the client
         this.currentGameServerState = EGameServerState.None;
@@ -105,6 +107,10 @@ export class LobbyRoom extends Room<LobbyRoomState> {
   onGameServerReady(options: any) {
     this.broadcast("gameServerReady", options);
     this.currentGameServerState = EGameServerState.Running;
+  }
+
+  onGameServerPing() {
+    this.unHealthyCountdown = 10000;
   }
 
   update(deltaTime: number) {
@@ -130,6 +136,14 @@ export class LobbyRoom extends Room<LobbyRoomState> {
         }
         break;
       case ELobbyRoomState.Stopped:
+        break;
+    }
+    switch (this.currentGameServerState) {
+      case EGameServerState.Running:
+        this.unHealthyCountdown -= deltaTime;
+        if (this.unHealthyCountdown <= 0) {
+          // TODO: Implement unhealthy game-server state
+        }
         break;
     }
   }

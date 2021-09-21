@@ -46,7 +46,15 @@ export default Arena({
             room.onGameServerReady(req.body);
         })
 
-        // TODO: Implement game-server health ping
+        app.post("/game-server/ping/:roomId", (req, res) => {
+            const roomId = req.params.roomId;
+            if (!lobbyRoomList.has(roomId)) {
+                res.status(404).send();
+                return;
+            }
+            const room = lobbyRoomList.get(roomId);
+            room.onGameServerPing();
+        })
 
         /**
          * Bind @colyseus/monitor
