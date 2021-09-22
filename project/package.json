@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "my-app",
+  "name": "dedicating-server-match-maker",
   "version": "1.0.0",
   "description": "npm init template for bootstrapping an empty Colyseus project",
   "main": "lib/index.js",
@@ -11,8 +11,8 @@
     "clean": "node node_modules/rimraf/bin lib",
     "test": "mocha --require ts-node/register test/**_test.ts --exit --timeout 15000"
   },
-  "author": "",
-  "license": "UNLICENSED",
+  "author": "Ittipon Teerapruettikulchai",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/colyseus/create-colyseus/issues"
   },
