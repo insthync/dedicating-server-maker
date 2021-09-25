@@ -5,6 +5,7 @@ import { EGameServerState } from "./enums/EGameServerState";
 import { ELobbyRoomState } from "./enums/ELobbyRoomState";
 import * as lobbyRoomList from "./LobbyRoomList";
 import * as child from "child_process";
+import * as shell from 'shelljs'
 
 export class LobbyRoom extends Room<LobbyRoomState> {
   maxTeams: number = 1;
@@ -86,26 +87,27 @@ export class LobbyRoom extends Room<LobbyRoomState> {
       return;
     }
     const filePath = String(process.env.EXE_PATH);
-    const args: Array<string> = JSON.parse(process.env.EXE_LAUNCH_ARGS);
+    let cmd = "nohup ";
+    cmd += `${filePath} `;
     // Room ID
-    args.push(process.env.EXE_LAUNCH_ARG_ROOM_ID);
-    args.push(this.roomId);
+    cmd += `${process.env.EXE_LAUNCH_ARG_ROOM_ID} `;
+    cmd += `${this.roomId} `;
     // Address
-    args.push(process.env.EXE_LAUNCH_ARG_ADDRESS);
-    args.push(process.env.EXE_LAUNCH_ADDRESS);
+    cmd += `${process.env.EXE_LAUNCH_ARG_ADDRESS} `;
+    cmd += `${process.env.EXE_LAUNCH_ADDRESS} `;
     // Port
-    args.push(process.env.EXE_LAUNCH_ARG_PORT);
-    args.push(String(lobbyRoomList.getPort()));
+    cmd += `${process.env.EXE_LAUNCH_ARG_PORT} `;
+    cmd += `${lobbyRoomList.getPort()} `;
+    // Other arguments
+    const args: Array<string> = JSON.parse(process.env.EXE_LAUNCH_ARGS);
+    cmd += args.join(' ');
     // launch a game-server
-    this.gameServerProcess = child.execFile(filePath, args, (error, stdout, stderr) => {
-      if (error) {
-        // TODO: May send error message to the client
-        this.currentGameServerState = EGameServerState.None;
-        console.log(this.roomId + " game-server launch failed " + stderr);
-        throw error;
-      }
-      console.log(this.roomId + " game-server launched " + stdout);
-    });
+    this.gameServerProcess = shell.exec(cmd, {silent: true, async: true})
+    this.gameServerProcess.on("close", (code, signal) => {
+      this.currentGameServerState = EGameServerState.None;
+      console.log(`${this.roomId} game-server closing, code: ${code}  signal: ${signal}`)
+    })
+    console.log(`${this.roomId} game-server launched.`);
     this.currentGameServerState = EGameServerState.Starting;
   }
 
