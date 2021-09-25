@@ -5,7 +5,7 @@ import { EGameServerState } from "./enums/EGameServerState";
 import { ELobbyRoomState } from "./enums/ELobbyRoomState";
 import * as lobbyRoomList from "./LobbyRoomList";
 import * as child from "child_process";
-import * as shell from 'shelljs'
+import * as shell from 'shelljs';
 
 export class LobbyRoom extends Room<LobbyRoomState> {
   maxTeams: number = 1;
